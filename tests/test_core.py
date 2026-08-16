@@ -10,7 +10,7 @@ from music_exporter.models import Track
 from music_exporter.mv_fallback import choose_preferred, match_score, video_match_score
 from music_exporter.netease import NeteaseAdapter
 from music_exporter.output import deduplicate, write_outputs
-from update_music_site import build_export_command, compare_sites
+from update_music_site import build_export_command, compare_sites, site_content_changed
 
 
 class CoreTests(unittest.TestCase):
@@ -30,6 +30,9 @@ class CoreTests(unittest.TestCase):
         added, removed = compare_sites(before, after)
         self.assertEqual([item["title"] for item in added], ["新歌"])
         self.assertEqual([item["title"] for item in removed], ["旧歌"])
+        same_before = {"generated_at": "old", "total": 1, "tracks": before["tracks"]}
+        same_after = {"generated_at": "new", "total": 1, "tracks": before["tracks"]}
+        self.assertFalse(site_content_changed(same_before, same_after))
 
     def test_music_site_payload(self):
         rows = [

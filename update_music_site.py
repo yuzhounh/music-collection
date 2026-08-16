@@ -95,6 +95,12 @@ def compare_sites(before: dict[str, Any], after: dict[str, Any]) -> tuple[list[d
     return added, removed
 
 
+def site_content_changed(before: dict[str, Any], after: dict[str, Any]) -> bool:
+    before_content = {key: value for key, value in before.items() if key != "generated_at"}
+    after_content = {key: value for key, value in after.items() if key != "generated_at"}
+    return before_content != after_content
+
+
 def _copy_directory_files(source: Path, destination: Path) -> None:
     destination.mkdir(parents=True, exist_ok=True)
     for item in source.iterdir():
@@ -102,9 +108,11 @@ def _copy_directory_files(source: Path, destination: Path) -> None:
             shutil.copy2(item, destination / item.name)
 
 
-def _install_results(raw: Path, classified: Path, site_data: Path) -> None:
+def _install_results(raw: Path, classified: Path, site_data: Path, *, update_site: bool) -> None:
     _copy_directory_files(raw, RAW_OUTPUT)
     _copy_directory_files(classified, CLASSIFIED_OUTPUT)
+    if not update_site:
+        return
     SITE_DATA.parent.mkdir(parents=True, exist_ok=True)
     staged_site = SITE_DATA.with_suffix(".json.new")
     shutil.copy2(site_data, staged_site)
@@ -197,9 +205,12 @@ def main() -> int:
             if new_total <= 0:
                 raise RuntimeError("没有抓取到任何歌曲，原网页未被覆盖")
             added, removed = compare_sites(before, after)
-            _install_results(raw, classified, site_data)
+            content_changed = site_content_changed(before, after)
+            _install_results(raw, classified, site_data, update_site=content_changed)
 
         _print_changes(added, removed, new_total)
+        if not content_changed:
+            print("  网页内容没有变化，已忽略本次生成时间差异。")
         if args.push:
             _git_push(len(added), len(removed))
         return 0
