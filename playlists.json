@@ -1,0 +1,56 @@
+{
+  "browser": null,
+  "minimum_retention_ratio": 0.75,
+  "netease": [
+    {
+      "name": "我喜欢的音乐",
+      "url": "https://music.163.com/m/playlist?id=13897787"
+    },
+    {
+      "name": "外文歌曲",
+      "url": "https://music.163.com/m/playlist?id=43075582"
+    },
+    {
+      "name": "流行歌曲",
+      "url": "https://music.163.com/m/playlist?id=43076504"
+    },
+    {
+      "name": "纯音乐",
+      "url": "https://music.163.com/m/playlist?id=43078433"
+    },
+    {
+      "name": "影视原声",
+      "url": "https://music.163.com/m/playlist?id=43078379"
+    }
+  ],
+  "kuwo": [
+    {
+      "name": "我喜欢听",
+      "url": "https://m.kuwo.cn/newh5app/playlist_detail/146732885"
+    },
+    {
+      "name": "手机默认列表",
+      "url": "https://m.kuwo.cn/newh5app/playlist_detail/3468193159"
+    },
+    {
+      "name": "流行",
+      "url": "https://m.kuwo.cn/newh5app/playlist_detail/548167482"
+    },
+    {
+      "name": "影视",
+      "url": "https://m.kuwo.cn/newh5app/playlist_detail/548166820"
+    },
+    {
+      "name": "纯音乐",
+      "url": "https://m.kuwo.cn/newh5app/playlist_detail/548095733"
+    },
+    {
+      "name": "外文",
+      "url": "https://m.kuwo.cn/newh5app/playlist_detail/146767350"
+    },
+    {
+      "name": "PC 列表",
+      "url": "https://m.kuwo.cn/newh5app/playlist_detail/3720866531"
+    }
+  ]
+}

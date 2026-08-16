@@ -1,0 +1,97 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="description" content="按流行歌曲、外文歌曲、纯音乐和影视原声浏览个人音乐收藏">
+  <title>我的音乐收藏</title>
+  <link rel="stylesheet" href="assets/styles.css">
+  <style>[hidden]{display:none!important}</style>
+</head>
+<body>
+  <header class="hero">
+    <div class="hero__inner">
+      <p class="eyebrow">PERSONAL MUSIC ARCHIVE</p>
+      <h1>我的音乐收藏</h1>
+      <p class="intro">汇集网易云音乐与酷我音乐收藏，合并去重后按类别浏览。</p>
+      <div class="hero__stats" aria-label="收藏统计">
+        <span><strong id="total-stat">—</strong> 首歌曲</span>
+        <span><strong id="category-stat">—</strong> 个类别</span>
+        <span><strong id="platform-stat">—</strong> 个来源平台</span>
+      </div>
+    </div>
+  </header>
+
+  <main class="page">
+    <nav id="category-tabs" class="tabs" aria-label="音乐类别">
+      <button class="tab is-active" type="button" data-category="all">全部 <span id="all-count"></span></button>
+    </nav>
+
+    <section class="collection">
+      <div class="collection__head">
+        <div>
+          <p class="section-label">MUSIC COLLECTION</p>
+          <h2 id="collection-title">全部</h2>
+        </div>
+        <div class="controls">
+          <label class="search">
+            <span class="sr-only">搜索音乐</span>
+            <input id="search" type="search" placeholder="搜索歌名、歌手、专辑或原歌单" autocomplete="off" disabled>
+          </label>
+          <label class="select-control">来源
+            <select id="platform-filter" disabled>
+              <option value="all">全部平台</option>
+              <option value="netease">网易云音乐</option>
+              <option value="kuwo">酷我音乐</option>
+            </select>
+          </label>
+          <label class="select-control">每页
+            <select id="page-size" disabled>
+              <option value="25">25</option>
+              <option value="50" selected>50</option>
+              <option value="100">100</option>
+            </select>
+          </label>
+        </div>
+      </div>
+
+      <div class="status-row">
+        <p id="status" class="status">正在载入音乐收藏…</p>
+        <p id="updated" class="updated"></p>
+      </div>
+
+      <div class="table-wrap">
+        <table>
+          <thead>
+            <tr>
+              <th class="rank">#</th>
+              <th>歌曲</th>
+              <th>歌手</th>
+              <th class="album-column">专辑</th>
+              <th class="category-column">类别</th>
+              <th>来源</th>
+            </tr>
+          </thead>
+          <tbody id="music-rows"></tbody>
+        </table>
+      </div>
+
+      <nav class="pagination" aria-label="歌曲分页">
+        <button id="first-page" type="button" disabled>首页</button>
+        <button id="previous-page" type="button" disabled>上一页</button>
+        <label>第 <input id="page-number" type="number" min="1" value="1" disabled> 页</label>
+        <span id="page-total">/ 1 页</span>
+        <button id="jump-page" type="button" disabled>跳转</button>
+        <button id="next-page" type="button" disabled>下一页</button>
+        <button id="last-page" type="button" disabled>末页</button>
+      </nav>
+    </section>
+  </main>
+
+  <footer>
+    <span>歌曲信息来自个人收藏歌单，仅用于整理与索引；本站不存储或提供音频文件。</span>
+    <span id="footer-updated"></span>
+  </footer>
+  <script src="assets/app.js" defer></script>
+</body>
+</html>
