@@ -1,6 +1,7 @@
 import tempfile
 import unittest
 from pathlib import Path
+from unittest import mock
 
 from build_music_site import build_payload
 from merge_and_classify import merge_rows
@@ -10,10 +11,42 @@ from music_exporter.models import Track
 from music_exporter.mv_fallback import choose_preferred, match_score, video_match_score
 from music_exporter.netease import NeteaseAdapter
 from music_exporter.output import deduplicate, write_outputs
-from update_music_site import build_export_command, compare_sites, site_content_changed
+from update_music_site import _git_push, build_export_command, compare_sites, site_content_changed
 
 
 class CoreTests(unittest.TestCase):
+    def test_git_push_commits_only_generated_music_data(self) -> None:
+        with mock.patch("update_music_site._run") as run_mock, mock.patch(
+            "update_music_site.subprocess.run"
+        ) as subprocess_run:
+            subprocess_run.return_value.returncode = 1
+            _git_push(2, 1)
+
+        subprocess_run.assert_called_once_with(
+            ["git", "diff", "--cached", "--quiet", "--", "docs/data/music.json"],
+            cwd=mock.ANY,
+            check=False,
+        )
+        self.assertEqual(
+            run_mock.call_args_list[0],
+            mock.call(["git", "add", "--", "docs/data/music.json"]),
+        )
+        self.assertEqual(
+            run_mock.call_args_list[1],
+            mock.call(
+                [
+                    "git",
+                    "commit",
+                    "--only",
+                    "-m",
+                    mock.ANY,
+                    "--",
+                    "docs/data/music.json",
+                ]
+            ),
+        )
+        self.assertEqual(run_mock.call_args_list[2], mock.call(["git", "push"]))
+
     def test_update_site_command_and_diff(self) -> None:
         config = {
             "browser": None,
