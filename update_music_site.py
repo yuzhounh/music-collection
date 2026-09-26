@@ -140,13 +140,13 @@ def _git_push(added_count: int, removed_count: int) -> None:
         return
     _run(["git", "add", "--", "docs/data/music.json"])
     changed = subprocess.run(
-        ["git", "diff", "--cached", "--quiet"], cwd=ROOT, check=False
+        ["git", "diff", "--cached", "--quiet", "--", "docs/data/music.json"], cwd=ROOT, check=False
     ).returncode
     if changed == 0:
         print("\n网页数据没有变化，无需提交或推送。")
         return
     message = f"Update music collection (+{added_count}/-{removed_count}) {date.today().isoformat()}"
-    _run(["git", "commit", "-m", message])
+    _run(["git", "commit", "--only", "-m", message, "--", "docs/data/music.json"])
     _run(["git", "push"])
     print("\n已推送 GitHub；GitHub Pages 通常会在数分钟内完成更新。")
 
