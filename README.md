@@ -1,5 +1,7 @@
 # 网易云 + 酷我歌单导出工具
 
+[![Code License: MIT](https://img.shields.io/badge/Code%20License-MIT-D4A017.svg)](LICENSE)
+
 把网易云音乐、酷我音乐的歌单曲目**元数据**导出为 CSV 和 JSON，并按“歌曲名 + 歌手”合并去重。工具只读取歌单信息，**不下载音频、不破解会员、不绕过 DRM**。
 
 ## 能做什么
@@ -27,6 +29,8 @@
 在 PowerShell 中进入本目录：
 
 ```powershell
+git clone https://github.com/yuzhounh/music-collection.git
+cd music-collection
 py -3 -m venv .venv  # 若没有 py，可改为 python -m venv .venv
 .\.venv\Scripts\python.exe -m pip install -r requirements.txt
 ```
@@ -165,4 +169,10 @@ Windows 用户可以直接双击项目根目录中的 `打开音乐网页.bat`�
 
 更新采用临时目录完成全部抓取和分类；任何歌单失败、结果为空，或新结果低于旧数据安全比例时，都不会覆盖现有网页。完成后会显示新增、删除和当前歌曲数。新建歌单后，只需把公开分享链接及名称补充到 `playlists.json` 对应平台列表中。
 
+推送步骤只提交 `docs/data/music.json`；运行前已经暂存的其他改动会保留在暂存区，不会混入自动生成的提交。
+
 默认公开网页地址：`https://yuzhounh.github.io/music-collection/`。
+
+## 许可证与数据声明
+
+本仓库编写的软件代码采用 [MIT 许可证](LICENSE)。歌单、歌曲元数据、媒体信息及平台商标归原平台和权利人所有；MIT 许可证不授予这些第三方内容的再许可权。
