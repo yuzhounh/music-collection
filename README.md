@@ -1,6 +1,7 @@
 # 网易云 + 酷我歌单导出工具
 
 [![Code License: MIT](https://img.shields.io/badge/Code%20License-MIT-D4A017.svg)](LICENSE)
+[![Online Site](https://img.shields.io/badge/Online-Cloudflare_Pages-F38020?logo=cloudflare)](https://music-collection.pages.dev/)
 
 把网易云音乐、酷我音乐的歌单曲目**元数据**导出为 CSV 和 JSON，并按“歌曲名 + 歌手”合并去重。工具只读取歌单信息，**不下载音频、不破解会员、不绕过 DRM**。
 
@@ -171,7 +172,7 @@ Windows 用户可以直接双击项目根目录中的 `打开音乐网页.bat`�
 
 推送步骤只提交 `docs/data/music.json`；运行前已经暂存的其他改动会保留在暂存区，不会混入自动生成的提交。
 
-默认公开网页地址：`https://yuzhounh.github.io/music-collection/`。
+默认公开网页地址：`https://music-collection.pages.dev/`。
 
 ## 许可证与数据声明
 
