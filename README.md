@@ -1,11 +1,20 @@
-# 网易云 + 酷我歌单导出工具
+# Music Collection · 音乐收藏
 
-[![Code License: MIT](https://img.shields.io/badge/Code%20License-MIT-D4A017.svg)](LICENSE)
-[![Online Site](https://img.shields.io/badge/Online-Cloudflare_Pages-F38020?logo=cloudflare)](https://music-collection.pages.dev/)
+> 导出网易云与酷我歌单，合并去重并展示个人音乐收藏。
+
+<p>
+  <a href="https://music-collection.pages.dev/"><img src="https://img.shields.io/badge/Website-Cloudflare%20Pages-f38020?style=flat&amp;logo=cloudflare&amp;logoColor=white" alt="Website: Cloudflare Pages"></a>
+  <a href="LICENSE"><img src="https://img.shields.io/badge/Code%20license-MIT-f59e0b?style=flat" alt="Code license: MIT"></a>
+  <img src="https://img.shields.io/badge/Python-3-3776ab?style=flat&amp;logo=python&amp;logoColor=white" alt="Python: 3">
+</p>
+
+<p>
+  <a href="https://music-collection.pages.dev/">在线体验</a> · <a href="#最简单的-windows-用法">快速开始</a> · <a href="LICENSE">开源协议</a>
+</p>
 
 把网易云音乐、酷我音乐的歌单曲目**元数据**导出为 CSV 和 JSON，并按“歌曲名 + 歌手”合并去重。工具只读取歌单信息，**不下载音频、不破解会员、不绕过 DRM**。
 
-## 能做什么
+## 功能特点
 
 - 输入一个或多个网易云/酷我歌单链接或数字 ID
 - 支持公开歌单；私有歌单可尝试读取 Chrome、Edge 或 Firefox 的已有登录 Cookie
