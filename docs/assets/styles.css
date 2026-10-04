@@ -145,6 +145,12 @@ footer { display: flex; justify-content: space-between; gap: 20px; padding: 0 8p
   footer { flex-direction: column; }
 }
 
+@media (min-width: 744px) and (min-height: 600px) and (pointer: coarse) {
+  button, input, select { min-height: 44px; }
+  .source-link { display: inline-flex; align-items: center; min-height: 44px; }
+  input, select { font-size: 16px; }
+}
+
 @media (prefers-color-scheme: dark) {
   :root { --ink:#edf0f7; --muted:#aab0bf; --paper:#151821; --card:#1d2230; --line:#363d4f; --accent:#f08c6c; --accent-dark:#ffab90; --accent-soft:#412b2b; --teal:#70c9bd; --shadow:none; }
   input, select, button { background:#242a39; }
