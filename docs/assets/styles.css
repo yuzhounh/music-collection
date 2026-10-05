@@ -931,3 +931,42 @@ body[data-theme="dark"] .source-link:hover {
     text-align: center !important;
   }
 }
+
+
+/* ========================================================
+   YouTube Music Links & Clickable Song Title
+   ======================================================== */
+.song-title-link {
+  color: inherit;
+  text-decoration: none;
+  transition: color 0.15s ease;
+}
+.song-title-link:hover {
+  color: #e53935;
+  text-decoration: underline;
+}
+:root[data-theme="dark"] .song-title-link:hover,
+body[data-theme="dark"] .song-title-link:hover {
+  color: #ff6e6b;
+}
+
+.source-link--ytm {
+  color: #e53935 !important;
+  border-color: rgba(229, 57, 53, 0.4) !important;
+  font-weight: 700 !important;
+}
+.source-link--ytm:hover {
+  background: rgba(229, 57, 53, 0.1) !important;
+  border-color: #e53935 !important;
+}
+
+:root[data-theme="dark"] .source-link--ytm,
+body[data-theme="dark"] .source-link--ytm {
+  color: #ff6e6b !important;
+  border-color: rgba(255, 110, 107, 0.4) !important;
+}
+:root[data-theme="dark"] .source-link--ytm:hover,
+body[data-theme="dark"] .source-link--ytm:hover {
+  background: rgba(255, 110, 107, 0.15) !important;
+  border-color: #ff6e6b !important;
+}

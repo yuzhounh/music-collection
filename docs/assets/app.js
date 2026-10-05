@@ -38,6 +38,19 @@ function sourceCell(track) {
   const node = document.createElement("td");
   const wrapper = document.createElement("div");
   wrapper.className = "source-links";
+
+  // YouTube Music 直达播放链接
+  const ytmQuery = encodeURIComponent(`${track.title} ${track.artists}`.trim());
+  const ytmAnchor = document.createElement("a");
+  ytmAnchor.className = "source-link source-link--ytm";
+  ytmAnchor.href = `https://music.youtube.com/search?q=${ytmQuery}`;
+  ytmAnchor.target = "_blank";
+  ytmAnchor.rel = "noopener noreferrer";
+  ytmAnchor.title = `在 YouTube Music 搜索并直接播放《${track.title}》`;
+  ytmAnchor.textContent = "YT Music";
+  wrapper.append(ytmAnchor);
+
+  // 原来源平台链接（网易云 / 酷我）
   const sources = [
     { key: "netease", label: "网易云", domain: "music.163.com" },
     { key: "kuwo", label: "酷我", domain: "kuwo.cn" },
@@ -104,7 +117,19 @@ function renderRows() {
 
         row.append(
           cell("rank", integerFormat.format(start + index + 1)),
-          cell("song", track.title),
+          (() => {
+          const songNode = document.createElement("td");
+          songNode.className = "song";
+          const songLink = document.createElement("a");
+          songLink.className = "song-title-link";
+          songLink.href = `https://music.youtube.com/search?q=${encodeURIComponent(`${track.title} ${track.artists}`.trim())}`;
+          songLink.target = "_blank";
+          songLink.rel = "noopener noreferrer";
+          songLink.title = `点击在 YouTube Music 播放《${track.title}》`;
+          songLink.textContent = track.title;
+          songNode.append(songLink);
+          return songNode;
+        })(),
           artistNode,
           cell("album", track.album),
           category,
