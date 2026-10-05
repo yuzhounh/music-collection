@@ -73,8 +73,10 @@ function renderRows() {
         badge.textContent = track.category;
         category.append(badge);
 
+        // 1. 歌手单元格（挂载完整 title 提示）
         const artistNode = document.createElement("td");
         artistNode.className = "artist";
+        artistNode.title = track.artists || "—";
         const artistName = document.createElement("span");
         artistName.className = "artist-name";
         artistName.textContent = track.artists || "—";
@@ -87,25 +89,36 @@ function renderRows() {
           albumMobile.className = "album-mobile-name";
           albumMobile.textContent = track.album;
           artistNode.append(sep, albumMobile);
+          artistNode.title = `${track.artists || "—"} · ${track.album}`;
         }
+
+        // 2. 歌曲单元格（挂载完整 title 提示）
+        const songNode = document.createElement("td");
+        songNode.className = "song";
+        songNode.title = track.title;
+        const songLink = document.createElement("a");
+        songLink.className = "song-title-link";
+        songLink.href = `https://music.youtube.com/search?q=${encodeURIComponent(`${track.title} ${track.artists}`.trim())}`;
+        songLink.target = "_blank";
+        songLink.rel = "noopener noreferrer";
+        songLink.title = track.title;
+        songLink.textContent = track.title;
+        songNode.append(songLink);
+
+        // 3. 专辑单元格（包裹 span 并挂载完整 title 提示）
+        const albumNode = document.createElement("td");
+        albumNode.className = "album";
+        albumNode.title = track.album || "—";
+        const albumSpan = document.createElement("span");
+        albumSpan.className = "album-text";
+        albumSpan.textContent = track.album || "—";
+        albumNode.append(albumSpan);
 
         row.append(
           cell("rank", integerFormat.format(start + index + 1)),
-          (() => {
-          const songNode = document.createElement("td");
-          songNode.className = "song";
-          const songLink = document.createElement("a");
-          songLink.className = "song-title-link";
-          songLink.href = `https://music.youtube.com/search?q=${encodeURIComponent(`${track.title} ${track.artists}`.trim())}`;
-          songLink.target = "_blank";
-          songLink.rel = "noopener noreferrer";
-          songLink.title = `点击在 YouTube Music 播放《${track.title}》`;
-          songLink.textContent = track.title;
-          songNode.append(songLink);
-          return songNode;
-        })(),
+          songNode,
           artistNode,
-          cell("album", track.album),
+          albumNode,
           category,
           sourceCell(track),
         );

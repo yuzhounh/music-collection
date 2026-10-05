@@ -1053,3 +1053,66 @@ body[data-theme="dark"] .play-btn:hover {
     height: 12px !important;
   }
 }
+
+
+/* ========================================================
+   Table Layout & 2-Line Truncation with Ellipsis
+   ======================================================== */
+table {
+  table-layout: fixed !important;
+  width: 100% !important;
+}
+
+/* 固定列宽比例配置，避免内容无限撑开 */
+.rank-col { width: 52px !important; }
+.song-col { width: 34% !important; min-width: 110px !important; }
+.artist-col { width: 28% !important; min-width: 95px !important; }
+.album-col { width: 38% !important; min-width: 110px !important; }
+.category-col { width: 84px !important; }
+.play-col { width: 64px !important; }
+
+/* 歌曲、歌手、专辑文字最多显示 2 行，超出以省略号截断 */
+.song-title-link,
+.artist-name,
+.album-text {
+  display: -webkit-box !important;
+  -webkit-box-orient: vertical !important;
+  -webkit-line-clamp: 2 !important;
+  line-clamp: 2 !important;
+  overflow: hidden !important;
+  text-overflow: ellipsis !important;
+  word-break: break-word !important;
+  line-height: 1.35 !important;
+  max-height: 2.7em !important;
+}
+
+/* 单元格鼠标指针与悬停效果增强 */
+td.song,
+td.artist,
+td.album {
+  cursor: default;
+}
+td.song a {
+  cursor: pointer;
+}
+
+@media (max-width: 720px) {
+  /* 移动端合并显示两行排版 */
+  td.artist {
+    display: -webkit-box !important;
+    -webkit-box-orient: vertical !important;
+    -webkit-line-clamp: 2 !important;
+    line-clamp: 2 !important;
+    overflow: hidden !important;
+    text-overflow: ellipsis !important;
+    word-break: break-word !important;
+    line-height: 1.25 !important;
+    max-height: 2.5em !important;
+  }
+  .artist-name {
+    display: inline !important;
+    -webkit-line-clamp: unset !important;
+    line-clamp: unset !important;
+    max-height: none !important;
+  }
+}
