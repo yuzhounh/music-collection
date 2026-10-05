@@ -4,7 +4,7 @@ const state = {
   category: "all",
   platform: "all",
   page: 1,
-  pageSize: 50,
+  pageSize: 100,
 };
 
 const elements = {
@@ -78,23 +78,40 @@ function renderRows() {
     fragment.append(row);
   } else {
     visible.forEach((track, index) => {
-      const row = document.createElement("tr");
-      const category = document.createElement("td");
-      category.className = "category-cell";
-      const badge = document.createElement("span");
-      badge.className = "category-badge";
-      badge.textContent = track.category;
-      category.append(badge);
-      row.append(
-        cell("rank", integerFormat.format(start + index + 1)),
-        cell("song", track.title),
-        cell("artist", track.artists),
-        cell("album", track.album),
-        category,
-        sourceCell(track),
-      );
-      fragment.append(row);
-    });
+        const row = document.createElement("tr");
+        const category = document.createElement("td");
+        category.className = "category-cell";
+        const badge = document.createElement("span");
+        badge.className = "category-badge";
+        badge.textContent = track.category;
+        category.append(badge);
+
+        const artistNode = document.createElement("td");
+        artistNode.className = "artist";
+        const artistName = document.createElement("span");
+        artistName.className = "artist-name";
+        artistName.textContent = track.artists || "—";
+        artistNode.append(artistName);
+        if (track.album) {
+          const sep = document.createElement("span");
+          sep.className = "album-separator";
+          sep.textContent = " · ";
+          const albumMobile = document.createElement("span");
+          albumMobile.className = "album-mobile-name";
+          albumMobile.textContent = track.album;
+          artistNode.append(sep, albumMobile);
+        }
+
+        row.append(
+          cell("rank", integerFormat.format(start + index + 1)),
+          cell("song", track.title),
+          artistNode,
+          cell("album", track.album),
+          category,
+          sourceCell(track),
+        );
+        fragment.append(row);
+      });
   }
 
   elements.rows.replaceChildren(fragment);
@@ -169,7 +186,7 @@ function jumpToPage() {
 
 elements.search.addEventListener("input", () => applyFilters());
 elements.platform.addEventListener("change", () => { state.platform = elements.platform.value; applyFilters(); });
-elements.pageSize.addEventListener("change", () => { state.pageSize = Number(elements.pageSize.value) || 50; applyFilters(); });
+elements.pageSize.addEventListener("change", () => { state.pageSize = Number(elements.pageSize.value) || 100; applyFilters(); });
 elements.first.addEventListener("click", () => { state.page = 1; renderRows(); });
 elements.previous.addEventListener("click", () => { state.page -= 1; renderRows(); });
 elements.next.addEventListener("click", () => { state.page += 1; renderRows(); });

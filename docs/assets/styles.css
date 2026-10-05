@@ -81,7 +81,7 @@ input:focus-visible, select:focus-visible, button:focus-visible, a:focus-visible
 
 .table-wrap { overflow-x: auto; border: 1px solid var(--line); border-radius: 10px; }
 table { width: 100%; border-collapse: collapse; font-size: .86rem; font-variant-numeric: tabular-nums; }
-th, td { padding: 13px 12px; border-bottom: 1px solid #ebe6dc; text-align: left; vertical-align: top; }
+th, td { padding: 9px 10px; border-bottom: 1px solid #ebe6dc; text-align: left; vertical-align: top; }
 th { background: #f8f5ef; color: var(--muted); font-size: .72rem; letter-spacing: .05em; white-space: nowrap; }
 tbody tr:last-child td { border-bottom: 0; }
 tbody tr:hover { background: #fbf5f1; }
@@ -779,5 +779,155 @@ body[data-theme="dark"] .source-link:hover {
   }
   .collection {
     border-radius: 16px;
+  }
+}
+
+
+/* Desktop album separator hidden */
+.album-separator,
+.album-mobile-name {
+  display: none;
+}
+
+/* ========================================================
+   Mobile Compact Music Rows (Spotify/Apple Music 风格双行紧凑布局)
+   ======================================================== */
+@media (max-width: 720px) {
+  .collection {
+    padding: 14px 10px !important;
+  }
+  .table-wrap {
+    overflow: visible !important;
+    border: 0 !important;
+  }
+  table, tbody {
+    display: block !important;
+    width: 100% !important;
+  }
+  thead {
+    position: absolute !important;
+    width: 1px !important;
+    height: 1px !important;
+    overflow: hidden !important;
+    clip-path: inset(50%) !important;
+  }
+
+  tbody tr {
+    display: grid !important;
+    grid-template-columns: 28px minmax(0, 1fr) auto !important;
+    grid-template-rows: auto auto !important;
+    gap: 3px 8px !important;
+    padding: 7px 4px !important;
+    align-items: center !important;
+    border-bottom: 1px solid var(--line) !important;
+    transition: background-color 0.15s ease !important;
+  }
+  tbody tr:hover {
+    background: color-mix(in srgb, var(--accent) 6%, transparent) !important;
+  }
+
+  td {
+    min-width: 0 !important;
+    border: 0 !important;
+    padding: 0 !important;
+  }
+
+  /* 序号居左垂直居中跨 2 行 */
+  td.rank {
+    grid-column: 1 !important;
+    grid-row: 1 / span 2 !important;
+    width: 28px !important;
+    text-align: center !important;
+    color: var(--muted) !important;
+    font-size: 0.78rem !important;
+    font-weight: 700 !important;
+    font-variant-numeric: tabular-nums !important;
+    align-self: center !important;
+  }
+
+  /* 歌名第一行左侧加粗单行截断 */
+  td.song {
+    grid-column: 2 !important;
+    grid-row: 1 !important;
+    font-size: 0.9rem !important;
+    font-weight: 700 !important;
+    color: var(--ink) !important;
+    white-space: nowrap !important;
+    overflow: hidden !important;
+    text-overflow: ellipsis !important;
+    line-height: 1.3 !important;
+  }
+
+  /* 来源平台链接第一行右侧对齐 */
+  td:last-child {
+    grid-column: 3 !important;
+    grid-row: 1 !important;
+    justify-self: end !important;
+  }
+  .source-links {
+    display: flex !important;
+    align-items: center !important;
+    gap: 4px !important;
+    min-width: 0 !important;
+  }
+  .source-link {
+    min-height: 22px !important;
+    height: 22px !important;
+    padding: 0 6px !important;
+    font-size: 0.7rem !important;
+    font-weight: 600 !important;
+    border-radius: 5px !important;
+    line-height: 20px !important;
+    white-space: nowrap !important;
+  }
+
+  /* 歌手与专辑第二行左侧单行合并 */
+  td.artist {
+    grid-column: 2 !important;
+    grid-row: 2 !important;
+    font-size: 0.75rem !important;
+    color: var(--muted) !important;
+    white-space: nowrap !important;
+    overflow: hidden !important;
+    text-overflow: ellipsis !important;
+    line-height: 1.25 !important;
+  }
+  td.artist::before {
+    content: '' !important;
+  }
+  .album-separator,
+  .album-mobile-name {
+    display: inline !important;
+    color: var(--muted) !important;
+    font-size: 0.74rem !important;
+  }
+
+  /* 原独立专辑列手机端隐藏 */
+  td.album {
+    display: none !important;
+  }
+  td.album::before {
+    content: '' !important;
+  }
+
+  /* 类别徽章置于第二行右侧 */
+  td.category-cell {
+    grid-column: 3 !important;
+    grid-row: 2 !important;
+    justify-self: end !important;
+    display: block !important;
+  }
+  .category-badge {
+    font-size: 0.68rem !important;
+    padding: 1px 6px !important;
+    border-radius: 4px !important;
+    line-height: 1.3 !important;
+    white-space: nowrap !important;
+  }
+
+  td.message {
+    grid-column: 1 / -1 !important;
+    padding: 24px 0 !important;
+    text-align: center !important;
   }
 }
