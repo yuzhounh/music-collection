@@ -36,43 +36,17 @@ function cell(className, text) {
 
 function sourceCell(track) {
   const node = document.createElement("td");
-  const wrapper = document.createElement("div");
-  wrapper.className = "source-links";
-
-  // YouTube Music 直达播放链接
+  node.className = "play-cell";
   const ytmQuery = encodeURIComponent(`${track.title} ${track.artists}`.trim());
-  const ytmAnchor = document.createElement("a");
-  ytmAnchor.className = "source-link source-link--ytm";
-  ytmAnchor.href = `https://music.youtube.com/search?q=${ytmQuery}`;
-  ytmAnchor.target = "_blank";
-  ytmAnchor.rel = "noopener noreferrer";
-  ytmAnchor.title = `在 YouTube Music 搜索并直接播放《${track.title}》`;
-  ytmAnchor.textContent = "YT Music";
-  wrapper.append(ytmAnchor);
-
-  // 原来源平台链接（网易云 / 酷我）
-  const sources = [
-    { key: "netease", label: "网易云", domain: "music.163.com" },
-    { key: "kuwo", label: "酷我", domain: "kuwo.cn" },
-  ];
-  sources.forEach((source) => {
-    const link = track.links.find((item) => item.includes(source.domain));
-    if (link) {
-      const anchor = document.createElement("a");
-      anchor.className = "source-link";
-      anchor.href = link;
-      anchor.target = "_blank";
-      anchor.rel = "noopener noreferrer";
-      anchor.textContent = source.label;
-      wrapper.append(anchor);
-    } else if (track.platforms.includes(source.key)) {
-      const label = document.createElement("span");
-      label.className = "source-link source-link--disabled";
-      label.textContent = source.label;
-      wrapper.append(label);
-    }
-  });
-  node.append(wrapper);
+  const anchor = document.createElement("a");
+  anchor.className = "play-btn";
+  anchor.href = `https://music.youtube.com/search?q=${ytmQuery}`;
+  anchor.target = "_blank";
+  anchor.rel = "noopener noreferrer";
+  anchor.title = `在 YouTube Music 播放《${track.title}》`;
+  anchor.setAttribute("aria-label", `在 YouTube Music 播放《${track.title}》`);
+  anchor.innerHTML = '<svg width="13" height="13" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><polygon points="6 4 20 12 6 20 6 4"></polygon></svg>';
+  node.append(anchor);
   return node;
 }
 

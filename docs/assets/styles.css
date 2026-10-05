@@ -970,3 +970,86 @@ body[data-theme="dark"] .source-link--ytm:hover {
   background: rgba(255, 110, 107, 0.15) !important;
   border-color: #ff6e6b !important;
 }
+
+
+/* ========================================================
+   Dedicated Play Button for YouTube Music
+   ======================================================== */
+.play-column {
+  text-align: center !important;
+  width: 68px !important;
+  white-space: nowrap !important;
+}
+
+.play-cell {
+  text-align: center !important;
+  vertical-align: middle !important;
+}
+
+.play-btn {
+  display: inline-flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  width: 32px !important;
+  height: 32px !important;
+  min-height: 32px !important;
+  padding: 0 !important;
+  border-radius: 50% !important;
+  border: 1px solid rgba(229, 57, 53, 0.35) !important;
+  background: rgba(229, 57, 53, 0.08) !important;
+  color: #e53935 !important;
+  text-decoration: none !important;
+  cursor: pointer !important;
+  transition: all 0.18s ease !important;
+  box-sizing: border-box !important;
+}
+
+.play-btn svg {
+  margin-left: 2px; /* 光学居中 */
+  flex-shrink: 0;
+}
+
+.play-btn:hover {
+  background: #e53935 !important;
+  color: #fff !important;
+  border-color: #e53935 !important;
+  transform: scale(1.08) !important;
+  box-shadow: 0 4px 14px rgba(229, 57, 53, 0.28) !important;
+}
+
+:root[data-theme="dark"] .play-btn,
+body[data-theme="dark"] .play-btn {
+  border-color: rgba(255, 110, 107, 0.4) !important;
+  background: rgba(255, 110, 107, 0.12) !important;
+  color: #ff6e6b !important;
+}
+
+:root[data-theme="dark"] .play-btn:hover,
+body[data-theme="dark"] .play-btn:hover {
+  background: #ff6e6b !important;
+  color: #151821 !important;
+  border-color: #ff6e6b !important;
+  box-shadow: 0 4px 14px rgba(255, 110, 107, 0.32) !important;
+}
+
+@media (max-width: 720px) {
+  .play-column {
+    display: none !important;
+  }
+  td.play-cell {
+    grid-column: 3 !important;
+    grid-row: 1 !important;
+    justify-self: end !important;
+    display: flex !important;
+    align-items: center !important;
+  }
+  .play-btn {
+    width: 28px !important;
+    height: 28px !important;
+    min-height: 28px !important;
+  }
+  .play-btn svg {
+    width: 12px !important;
+    height: 12px !important;
+  }
+}
