@@ -1009,6 +1009,27 @@ body[data-theme="dark"] .source-link--ytm:hover {
   flex-shrink: 0;
 }
 
+.play-btn[data-state="playing"] svg,
+.play-btn[data-state="loading"] svg {
+  margin-left: 0;
+}
+
+.play-btn[data-state="playing"] {
+  background: #e53935 !important;
+  color: #fff !important;
+  border-color: #e53935 !important;
+}
+
+:root[data-theme="dark"] .play-btn[data-state="playing"],
+body[data-theme="dark"] .play-btn[data-state="playing"] {
+  background: #ff6e6b !important;
+  color: #151821 !important;
+  border-color: #ff6e6b !important;
+}
+
+.play-spinner { animation: play-spin .8s linear infinite; }
+@keyframes play-spin { to { transform: rotate(360deg); } }
+
 .play-btn:hover {
   background: #e53935 !important;
   color: #fff !important;

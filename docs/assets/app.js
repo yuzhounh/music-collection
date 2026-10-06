@@ -34,19 +34,125 @@ function cell(className, text) {
   return node;
 }
 
+const ICON_PLAY = '<svg width="13" height="13" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><polygon points="6 4 20 12 6 20 6 4"></polygon></svg>';
+const ICON_PAUSE = '<svg width="13" height="13" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><rect x="6" y="5" width="4" height="14" rx="1"></rect><rect x="14" y="5" width="4" height="14" rx="1"></rect></svg>';
+const ICON_LOADING = '<svg class="play-spinner" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" aria-hidden="true"><path d="M12 3a9 9 0 1 0 9 9"></path></svg>';
+
+// 在页面内用 YouTube 音源播放：先把「歌名 + 歌手」解析为视频 ID，再交给隐藏的 YouTube 播放器。
+// 首选自有的 Cloudflare Pages Function（YouTube Music 搜索代理）；GitHub Pages 等无后端站点跨域调用它。
+const SEARCH_API = location.hostname.endsWith("pages.dev") ? "/api/search" : "https://music-collection.pages.dev/api/search";
+const PIPED_FALLBACK = "https://api.piped.private.coffee/search";
+
+const player = { yt: null, ready: null, currentId: null, status: "idle", buttons: new Map() };
+
+function readCache(key) {
+  try { return localStorage.getItem(`ytid:${key}`); } catch { return null; }
+}
+function writeCache(key, value) {
+  try { localStorage.setItem(`ytid:${key}`, value); } catch { /* 忽略存储失败 */ }
+}
+
+async function resolveVideoId(track) {
+  const key = `${track.title} ${track.artists}`.trim();
+  const cached = readCache(key);
+  if (cached) return cached;
+  const q = encodeURIComponent(key);
+  let id;
+  try {
+    const response = await fetch(`${SEARCH_API}?q=${q}`, { signal: AbortSignal.timeout(8000) });
+    if (!response.ok) throw new Error(String(response.status));
+    id = (await response.json()).id;
+  } catch {
+    const response = await fetch(`${PIPED_FALLBACK}?q=${q}&filter=music_songs`, { signal: AbortSignal.timeout(8000) });
+    const data = await response.json();
+    id = (data.items || []).map((i) => (i.url || "").split("v=")[1]).find(Boolean);
+  }
+  if (!id) throw new Error("not found");
+  writeCache(key, id);
+  return id;
+}
+
+function loadYouTubeApi() {
+  if (player.ready) return player.ready;
+  player.ready = new Promise((resolve, reject) => {
+    const host = document.createElement("div");
+    host.style.cssText = "position:fixed;width:1px;height:1px;left:-9999px;top:0;overflow:hidden;";
+    const mount = document.createElement("div");
+    host.append(mount);
+    document.body.append(host);
+    window.onYouTubeIframeAPIReady = () => {
+      player.yt = new YT.Player(mount, {
+        width: "200", height: "200",
+        playerVars: { playsinline: 1, controls: 0 },
+        events: {
+          onReady: () => resolve(player.yt),
+          onStateChange: (e) => {
+            if (e.data === YT.PlayerState.PLAYING) setStatus("playing");
+            else if (e.data === YT.PlayerState.PAUSED) setStatus("paused");
+            else if (e.data === YT.PlayerState.ENDED) setStatus("idle", null);
+            else if (e.data === YT.PlayerState.BUFFERING) setStatus("loading");
+          },
+          onError: () => { const t = player.currentTrack; setStatus("idle", null); if (t) openInYouTubeMusic(t); },
+        },
+      });
+    };
+    const script = document.createElement("script");
+    script.src = "https://www.youtube.com/iframe_api";
+    script.onerror = () => { player.ready = null; reject(new Error("youtube api")); };
+    document.head.append(script);
+  });
+  return player.ready;
+}
+
+function openInYouTubeMusic(track) {
+  const q = encodeURIComponent(`${track.title} ${track.artists}`.trim());
+  window.open(`https://music.youtube.com/search?q=${q}`, "_blank", "noopener,noreferrer");
+}
+
+function paintButton(anchor, trackId) {
+  const active = trackId === player.currentId ? player.status : "idle";
+  anchor.dataset.state = active;
+  anchor.innerHTML = active === "playing" ? ICON_PAUSE : active === "loading" ? ICON_LOADING : ICON_PLAY;
+  const name = anchor.dataset.name;
+  const label = active === "playing" ? `暂停《${name}》` : active === "loading" ? `正在加载《${name}》` : `播放《${name}》`;
+  anchor.title = active === "playing" ? `正在播放《${name}》（点击暂停）` : label;
+  anchor.setAttribute("aria-label", label);
+}
+
+function setStatus(status, id = player.currentId) {
+  player.status = status;
+  player.currentId = id;
+  document.querySelectorAll(".play-btn").forEach((btn) => paintButton(btn, Number(btn.dataset.id)));
+}
+
+async function togglePlay(track) {
+  if (player.currentId === track.id && player.yt && (player.status === "playing" || player.status === "paused")) {
+    if (player.status === "playing") player.yt.pauseVideo(); else player.yt.playVideo();
+    return;
+  }
+  player.currentTrack = track;
+  setStatus("loading", track.id);
+  try {
+    const [id, yt] = await Promise.all([resolveVideoId(track), loadYouTubeApi()]);
+    if (player.currentId !== track.id) return; // 期间用户已切换到别的歌曲
+    yt.loadVideoById(id);
+  } catch {
+    if (player.currentId === track.id) setStatus("idle", null);
+    openInYouTubeMusic(track); // 无法在页内解析音源时，退回到 YouTube Music
+  }
+}
+
 function sourceCell(track) {
   const node = document.createElement("td");
   node.className = "play-cell";
-  const ytmQuery = encodeURIComponent(`${track.title} ${track.artists}`.trim());
-  const anchor = document.createElement("a");
-  anchor.className = "play-btn";
-  anchor.href = `https://music.youtube.com/search?q=${ytmQuery}`;
-  anchor.target = "_blank";
-  anchor.rel = "noopener noreferrer";
-  anchor.title = `在 YouTube Music 播放《${track.title}》`;
-  anchor.setAttribute("aria-label", `在 YouTube Music 播放《${track.title}》`);
-  anchor.innerHTML = '<svg width="13" height="13" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><polygon points="6 4 20 12 6 20 6 4"></polygon></svg>';
-  node.append(anchor);
+  const button = document.createElement("button");
+  button.type = "button";
+  button.className = "play-btn";
+  button.dataset.id = String(track.id);
+  button.dataset.name = track.title;
+  paintButton(button, track.id);
+  button.addEventListener("click", () => togglePlay(track));
+  node.append(button);
   return node;
 }
 
