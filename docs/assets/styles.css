@@ -1137,3 +1137,23 @@ td.song a {
     max-height: none !important;
   }
 }
+
+/* 全部播放按钮 */
+.play-all-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 0 14px;
+  border: 1px solid rgba(229, 57, 53, 0.35);
+  background: rgba(229, 57, 53, 0.08);
+  color: #e53935;
+  font-weight: 700;
+  cursor: pointer;
+  white-space: nowrap;
+}
+.play-all-btn .play-all-icon { display: inline-flex; }
+.play-all-btn:hover:not(:disabled), .play-all-btn[data-state="playing"] { background: #e53935; border-color: #e53935; color: #fff; }
+.play-all-btn:disabled { opacity: .5; cursor: default; }
+:root[data-theme="dark"] .play-all-btn, body[data-theme="dark"] .play-all-btn { border-color: rgba(255,110,107,.4); background: rgba(255,110,107,.12); color: #ff6e6b; }
+:root[data-theme="dark"] .play-all-btn:hover:not(:disabled), :root[data-theme="dark"] .play-all-btn[data-state="playing"],
+body[data-theme="dark"] .play-all-btn:hover:not(:disabled), body[data-theme="dark"] .play-all-btn[data-state="playing"] { background: #ff6e6b; border-color: #ff6e6b; color: #151821; }
