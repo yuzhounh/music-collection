@@ -14,6 +14,7 @@ const elements = {
   platform: document.querySelector("#platform-filter"),
   pageSize: document.querySelector("#page-size"),
   rows: document.querySelector("#music-rows"),
+  playAll: document.querySelector("#play-all"),
   status: document.querySelector("#status"),
   updated: document.querySelector("#updated"),
   first: document.querySelector("#first-page"),
@@ -43,7 +44,7 @@ const ICON_LOADING = '<svg class="play-spinner" width="13" height="13" viewBox="
 const SEARCH_API = location.hostname.endsWith("pages.dev") ? "/api/search" : "https://music-collection.pages.dev/api/search";
 const PIPED_FALLBACK = "https://api.piped.private.coffee/search";
 
-const player = { yt: null, ready: null, currentId: null, status: "idle", buttons: new Map() };
+const player = { yt: null, ready: null, currentId: null, status: "idle", queue: [], queueIndex: -1, queueKey: "" };
 
 function readCache(key) {
   try { return localStorage.getItem(`ytid:${key}`); } catch { return null; }
@@ -89,10 +90,10 @@ function loadYouTubeApi() {
           onStateChange: (e) => {
             if (e.data === YT.PlayerState.PLAYING) setStatus("playing");
             else if (e.data === YT.PlayerState.PAUSED) setStatus("paused");
-            else if (e.data === YT.PlayerState.ENDED) setStatus("idle", null);
+            else if (e.data === YT.PlayerState.ENDED) { if (!playNext()) setStatus("idle", null); }
             else if (e.data === YT.PlayerState.BUFFERING) setStatus("loading");
           },
-          onError: () => { const t = player.currentTrack; setStatus("idle", null); if (t) openInYouTubeMusic(t); },
+          onError: () => { if (playNext()) return; const t = player.currentTrack; setStatus("idle", null); if (t) openInYouTubeMusic(t); },
         },
       });
     };
@@ -123,6 +124,46 @@ function setStatus(status, id = player.currentId) {
   player.status = status;
   player.currentId = id;
   document.querySelectorAll(".play-btn").forEach((btn) => paintButton(btn, Number(btn.dataset.id)));
+  updatePlayAll();
+}
+
+function currentListKey() {
+  return `${state.category}|${state.platform}|${elements.search.value.trim()}`;
+}
+
+function updatePlayAll() {
+  const btn = elements.playAll;
+  if (!btn) return;
+  const sameList = player.queue.length > 0 && player.queueKey === currentListKey();
+  const playing = sameList && player.status === "playing";
+  btn.dataset.state = playing ? "playing" : "idle";
+  btn.querySelector(".play-all-icon").innerHTML = playing ? ICON_PAUSE : ICON_PLAY;
+  btn.querySelector(".play-all-label").textContent = playing ? "暂停" : sameList && player.status === "paused" ? "继续播放" : "播放全部";
+  btn.disabled = state.filtered.length === 0;
+}
+
+function playNext() {
+  if (!player.queue.length || player.queueIndex >= player.queue.length - 1) {
+    player.queue = [];
+    player.queueIndex = -1;
+    return false;
+  }
+  player.queueIndex += 1;
+  startTrack(player.queue[player.queueIndex], true);
+  return true;
+}
+
+function togglePlayAll() {
+  if (player.queue.length && player.queueKey === currentListKey() && player.yt) {
+    if (player.status === "playing") player.yt.pauseVideo();
+    else if (player.status === "paused") player.yt.playVideo();
+    return;
+  }
+  if (!state.filtered.length) return;
+  player.queue = state.filtered.slice();
+  player.queueKey = currentListKey();
+  player.queueIndex = 0;
+  startTrack(player.queue[0], true);
 }
 
 async function togglePlay(track) {
@@ -130,6 +171,12 @@ async function togglePlay(track) {
     if (player.status === "playing") player.yt.pauseVideo(); else player.yt.playVideo();
     return;
   }
+  player.queue = []; // 手动点播单曲时结束“全部播放”队列
+  player.queueIndex = -1;
+  startTrack(track, false);
+}
+
+async function startTrack(track, inQueue) {
   player.currentTrack = track;
   setStatus("loading", track.id);
   try {
@@ -137,6 +184,7 @@ async function togglePlay(track) {
     if (player.currentId !== track.id) return; // 期间用户已切换到别的歌曲
     yt.loadVideoById(id);
   } catch {
+    if (inQueue) { if (player.currentId === track.id && !playNext()) setStatus("idle", null); return; } // 队列中跳过无法播放的歌曲
     if (player.currentId === track.id) setStatus("idle", null);
     openInYouTubeMusic(track); // 无法在页内解析音源时，退回到 YouTube Music
   }
@@ -248,6 +296,7 @@ function renderRows() {
   elements.last.disabled = empty || state.page >= totalPages;
   elements.pageNumber.disabled = empty;
   elements.jump.disabled = empty;
+  updatePlayAll();
 }
 
 function applyFilters(resetPage = true) {
@@ -302,6 +351,7 @@ function jumpToPage() {
   document.querySelector(".collection__head").scrollIntoView({ behavior: "smooth" });
 }
 
+if (elements.playAll) elements.playAll.addEventListener("click", togglePlayAll);
 elements.search.addEventListener("input", () => applyFilters());
 elements.platform.addEventListener("change", () => { state.platform = elements.platform.value; applyFilters(); });
 elements.pageSize.addEventListener("change", () => { state.pageSize = Number(elements.pageSize.value) || 100; applyFilters(); });
