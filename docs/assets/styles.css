@@ -119,7 +119,10 @@ footer { display: flex; justify-content: space-between; gap: 20px; padding: 0 8p
   .tabs { padding-inline: 0; }
   .tab { padding-inline: 16px; }
   .collection { padding: 20px 12px; border-radius: 0 0 14px 14px; }
-  .status-row { align-items: flex-start; flex-direction: column; padding: 12px 0; }
+  .status-row { align-items: center; flex-direction: row; flex-wrap: wrap; padding: 12px 0; }
+  .status { flex: 1 1 auto; min-width: 0; }
+  .play-all-btn { margin-left: auto; flex: 0 0 auto; }
+  .updated:empty { display: none; }
   .album-column, td.album { display: none; }
   th, td { padding: 11px 9px; }
   .song { min-width: 165px; }
@@ -152,15 +155,22 @@ footer { display: flex; justify-content: space-between; gap: 20px; padding: 0 8p
 }
 
 @media (prefers-color-scheme: dark) {
-  :root { --ink:#edf0f7; --muted:#aab0bf; --paper:#151821; --card:#1d2230; --line:#363d4f; --accent:#f08c6c; --accent-dark:#ffab90; --accent-soft:#412b2b; --teal:#70c9bd; --shadow:none; }
-  input, select, button { background:#242a39; }
-  th { background:#232938; }
-  th, td { border-bottom-color:#343b4c; }
-  tbody tr:hover { background:#252b3a; }
-  .album { color:#c7cbd5; }
-  .source-link:hover { background:#233b3a; }
+  /* Fallback only before JS sets data-theme; explicit theme choice must win. */
+  :root:not([data-theme]) { --ink:#edf0f7; --muted:#aab0bf; --paper:#151821; --card:#1d2230; --line:#363d4f; --accent:#f08c6c; --accent-dark:#ffab90; --accent-soft:#412b2b; --teal:#70c9bd; --shadow:none; }
 }
 
+
+/* Light theme controls: explicit so a dark system setting never leaks in. */
+:root[data-theme="light"] input,
+:root[data-theme="light"] select,
+:root[data-theme="light"] button {
+  background: #fff;
+  color: var(--ink);
+  border-color: var(--line);
+}
+:root[data-theme="light"] .pagination button { color: var(--accent-dark); }
+:root[data-theme="light"] .pagination button:hover:not(:disabled) { background: var(--accent-soft); }
+:root[data-theme="light"] .pagination button:disabled { background: #f0ece4; }
 
 /* ========================================================
    1. Theme Variables & Global Styles
@@ -1157,3 +1167,8 @@ td.song a {
 :root[data-theme="dark"] .play-all-btn, body[data-theme="dark"] .play-all-btn { border-color: rgba(255,110,107,.4); background: rgba(255,110,107,.12); color: #ff6e6b; }
 :root[data-theme="dark"] .play-all-btn:hover:not(:disabled), :root[data-theme="dark"] .play-all-btn[data-state="playing"],
 body[data-theme="dark"] .play-all-btn:hover:not(:disabled), body[data-theme="dark"] .play-all-btn[data-state="playing"] { background: #ff6e6b; border-color: #ff6e6b; color: #151821; }
+
+/* Dark theme: pagination / disabled states */
+:root[data-theme="dark"] .pagination button { color: var(--accent-dark); }
+:root[data-theme="dark"] .pagination button:hover:not(:disabled) { background: var(--accent-soft); border-color: var(--accent); }
+:root[data-theme="dark"] .pagination button:disabled { background: #1a1f2b; color: var(--muted); }
