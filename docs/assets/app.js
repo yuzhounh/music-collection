@@ -15,8 +15,20 @@ const elements = {
   pageSize: document.querySelector("#page-size"),
   rows: document.querySelector("#music-rows"),
   playAll: document.querySelector("#play-all"),
+  nowPlaying: document.querySelector("#now-playing"),
+  playerToggle: document.querySelector("#player-toggle"),
+  playerPrevious: document.querySelector("#player-previous"),
+  playerNext: document.querySelector("#player-next"),
+  playerShuffle: document.querySelector("#player-shuffle"),
+  playerRepeat: document.querySelector("#player-repeat"),
+  playerSeek: document.querySelector("#player-seek"),
+  playerTime: document.querySelector("#player-time"),
+  playerTitle: document.querySelector("#player-title"),
+  playerSubtitle: document.querySelector("#player-subtitle"),
+  playerCover: document.querySelector("#player-cover"),
+  playerVolume: document.querySelector("#player-volume"),
+  playerMute: document.querySelector("#player-mute"),
   status: document.querySelector("#status"),
-  updated: document.querySelector("#updated"),
   first: document.querySelector("#first-page"),
   previous: document.querySelector("#previous-page"),
   pageNumber: document.querySelector("#page-number"),
@@ -44,7 +56,16 @@ const ICON_LOADING = '<svg class="play-spinner" width="13" height="13" viewBox="
 const SEARCH_API = location.hostname.endsWith("pages.dev") ? "/api/search" : "https://music-collection.pages.dev/api/search";
 const PIPED_FALLBACK = "https://api.piped.private.coffee/search";
 
-const player = { yt: null, ready: null, currentId: null, status: "idle", queue: [], queueIndex: -1, queueKey: "" };
+const player = { yt: null, ready: null, currentId: null, status: "idle", queue: [], queueSource: [], queueIndex: -1, queueKey: "", mode: "sequential", repeat: "off", volume: 100, muted: false, videoId: null, seeking: false, requestId: 0, progressTimer: null };
+const searchIndex = new WeakMap();
+
+function searchText(track) {
+  if (!searchIndex.has(track)) {
+    searchIndex.set(track, [track.title, track.artists, track.album, track.category, ...track.playlist_names]
+      .join(" ").toLocaleLowerCase("zh-CN"));
+  }
+  return searchIndex.get(track);
+}
 
 function readCache(key) {
   try { return localStorage.getItem(`ytid:${key}`); } catch { return null; }
@@ -86,11 +107,15 @@ function loadYouTubeApi() {
         width: "200", height: "200",
         playerVars: { playsinline: 1, controls: 0 },
         events: {
-          onReady: () => resolve(player.yt),
+          onReady: () => {
+            applyVolume();
+            syncProgressTimer();
+            resolve(player.yt);
+          },
           onStateChange: (e) => {
             if (e.data === YT.PlayerState.PLAYING) setStatus("playing");
             else if (e.data === YT.PlayerState.PAUSED) setStatus("paused");
-            else if (e.data === YT.PlayerState.ENDED) { if (!playNext()) setStatus("idle", null); }
+            else if (e.data === YT.PlayerState.ENDED) handleTrackEnded();
             else if (e.data === YT.PlayerState.BUFFERING) setStatus("loading");
           },
           onError: () => { if (playNext()) return; const t = player.currentTrack; setStatus("idle", null); if (t) openInYouTubeMusic(t); },
@@ -118,11 +143,13 @@ function paintButton(anchor, trackId) {
   const label = active === "playing" ? `暂停《${name}》` : active === "loading" ? `正在加载《${name}》` : `播放《${name}》`;
   anchor.title = active === "playing" ? `正在播放《${name}》（点击暂停）` : label;
   anchor.setAttribute("aria-label", label);
+  anchor.disabled = active === "loading";
 }
 
 function setStatus(status, id = player.currentId) {
   player.status = status;
   player.currentId = id;
+  syncProgressTimer();
   document.querySelectorAll(".play-btn").forEach((btn) => paintButton(btn, Number(btn.dataset.id)));
   updatePlayAll();
 }
@@ -134,56 +161,190 @@ function currentListKey() {
 function updatePlayAll() {
   const btn = elements.playAll;
   if (!btn) return;
-  const sameList = player.queue.length > 0 && player.queueKey === currentListKey();
-  const playing = sameList && player.status === "playing";
-  btn.dataset.state = playing ? "playing" : "idle";
-  btn.querySelector(".play-all-icon").innerHTML = playing ? ICON_PAUSE : ICON_PLAY;
-  btn.querySelector(".play-all-label").textContent = playing ? "暂停" : sameList && player.status === "paused" ? "继续播放" : "播放全部";
+  const active = player.currentId !== null && player.status !== "idle";
+  const playing = active && player.status === "playing";
+  const loading = active && player.status === "loading";
+  btn.querySelector(".play-all-icon").innerHTML = ICON_PLAY;
   btn.disabled = state.filtered.length === 0;
+  btn.title = "从头播放当前筛选结果中的全部歌曲（包含所有分页），沿用底部选择的播放模式";
+  const track = player.currentTrack;
+  elements.playerTitle.textContent = track ? track.title : "尚未播放";
+  elements.playerSubtitle.textContent = track ? [loading ? "正在加载" : playing ? "正在播放" : active ? "已暂停" : "播放已结束", track.artists, track.album].filter(Boolean).join(" · ") : "选择歌曲或播放全部";
+  elements.nowPlaying.title = `${elements.playerTitle.textContent} · ${elements.playerSubtitle.textContent}`;
+  elements.playerToggle.dataset.state = active ? player.status : "idle";
+  elements.playerToggle.querySelector(".play-all-icon").innerHTML = loading ? ICON_LOADING : playing ? ICON_PAUSE : ICON_PLAY;
+  elements.playerToggle.querySelector(".play-all-label").textContent = loading ? "加载中…" : playing ? "暂停" : active ? "继续" : "播放";
+  elements.playerToggle.setAttribute("aria-label", elements.playerToggle.querySelector(".play-all-label").textContent);
+  elements.playerToggle.title = elements.playerToggle.querySelector(".play-all-label").textContent;
+  elements.playerToggle.disabled = loading || (!track && state.filtered.length === 0);
+  elements.playerPrevious.disabled = !player.queue.length || (player.queueIndex <= 0 && player.repeat !== "all");
+  elements.playerNext.disabled = !player.queue.length || (player.queueIndex >= player.queue.length - 1 && player.repeat !== "all");
+  elements.playerShuffle.setAttribute("aria-pressed", String(player.mode === "shuffle"));
+  elements.playerShuffle.title = `随机播放：${player.mode === "shuffle" ? "开启" : "关闭"}`;
+  const repeatLabel = `循环：${player.repeat === "off" ? "关闭" : player.repeat === "all" ? "列表循环" : "单曲循环"}`;
+  elements.playerRepeat.title = repeatLabel;
+  elements.playerRepeat.setAttribute("aria-label", repeatLabel);
+  elements.playerRepeat.setAttribute("aria-pressed", String(player.repeat !== "off"));
+  elements.playerRepeat.querySelector(".repeat-one").hidden = player.repeat !== "one";
+  updatePlaybackTime();
 }
 
-function playNext() {
-  if (!player.queue.length || player.queueIndex >= player.queue.length - 1) {
-    player.queue = [];
-    player.queueIndex = -1;
-    return false;
+function formatTime(seconds) {
+  const value = Math.max(0, Math.floor(Number(seconds) || 0));
+  return `${Math.floor(value / 60)}:${String(value % 60).padStart(2, "0")}`;
+}
+
+function updatePlaybackTime() {
+  if (player.seeking || document.hidden) return;
+  const ready = player.videoId && player.yt?.getVideoData?.().video_id === player.videoId;
+  const duration = ready ? player.yt.getDuration() || 0 : 0;
+  const current = ready ? Math.min(player.yt.getCurrentTime() || 0, duration) : 0;
+  elements.playerTime.textContent = `${formatTime(current)} / ${formatTime(duration)}`;
+  elements.playerSeek.max = String(duration || 1);
+  elements.playerSeek.value = String(current);
+  elements.playerSeek.disabled = !duration;
+  elements.playerSeek.style.setProperty("--progress", `${duration ? current / duration * 100 : 0}%`);
+  elements.playerSeek.setAttribute("aria-valuetext", `${formatTime(current)}，共 ${formatTime(duration)}`);
+}
+
+function syncProgressTimer() {
+  const active = !document.hidden && player.status === "playing" && player.yt;
+  if (active && player.progressTimer === null) {
+    player.progressTimer = setInterval(updatePlaybackTime, 500);
+  } else if (!active && player.progressTimer !== null) {
+    clearInterval(player.progressTimer);
+    player.progressTimer = null;
   }
-  player.queueIndex += 1;
+}
+
+document.addEventListener("visibilitychange", () => {
+  syncProgressTimer();
+  if (!document.hidden) updatePlaybackTime();
+});
+
+function previewSeek() {
+  player.seeking = true;
+  const current = Number(elements.playerSeek.value);
+  const duration = Number(elements.playerSeek.max);
+  elements.playerTime.textContent = `${formatTime(current)} / ${formatTime(duration)}`;
+  elements.playerSeek.style.setProperty("--progress", `${current / duration * 100}%`);
+  elements.playerSeek.setAttribute("aria-valuetext", `${formatTime(current)}，共 ${formatTime(duration)}`);
+}
+
+function commitSeek() {
+  if (player.videoId && !elements.playerSeek.disabled) player.yt.seekTo(Number(elements.playerSeek.value), true);
+  player.seeking = false;
+  updatePlaybackTime();
+}
+
+function applyVolume() {
+  if (player.yt?.setVolume) {
+    player.yt.setVolume(player.volume);
+    if (player.muted) player.yt.mute(); else player.yt.unMute();
+  }
+  const silent = player.muted || player.volume === 0;
+  elements.playerMute.setAttribute("aria-pressed", String(silent));
+  elements.playerMute.setAttribute("aria-label", silent ? "取消静音" : "静音");
+  elements.playerMute.title = silent ? "取消静音" : "静音";
+  elements.playerVolume.value = String(player.muted ? 0 : player.volume);
+  elements.playerVolume.style.setProperty("--progress", `${player.muted ? 0 : player.volume}%`);
+}
+
+function handleTrackEnded() {
+  if (player.repeat === "one" && player.currentTrack) startTrack(player.currentTrack, true);
+  else if (!playNext(player.repeat === "all")) setStatus("idle", null);
+}
+
+function shuffleTracks(tracks) {
+  const result = tracks.slice();
+  for (let i = result.length - 1; i > 0; i -= 1) {
+    const j = Math.floor(Math.random() * (i + 1));
+    [result[i], result[j]] = [result[j], result[i]];
+  }
+  return result;
+}
+
+function changePlayMode(event) {
+  player.mode = event.target.value;
+  if (!player.queue.length) { updatePlayAll(); return; }
+  const remainingIds = new Set(player.queue.slice(player.queueIndex + 1).map((track) => track.id));
+  const remaining = player.queueSource.filter((track) => remainingIds.has(track.id));
+  player.queue = player.queue.slice(0, player.queueIndex + 1).concat(player.mode === "shuffle" ? shuffleTracks(remaining) : remaining);
+  updatePlayAll();
+}
+
+function playNext(wrap = false) {
+  if (!player.queue.length || (player.queueIndex >= player.queue.length - 1 && !wrap)) return false;
+  player.queueIndex = (player.queueIndex + 1) % player.queue.length;
   startTrack(player.queue[player.queueIndex], true);
   return true;
 }
 
-function togglePlayAll() {
-  if (player.queue.length && player.queueKey === currentListKey() && player.yt) {
-    if (player.status === "playing") player.yt.pauseVideo();
-    else if (player.status === "paused") player.yt.playVideo();
+function playPrevious() {
+  if (!player.queue.length || (player.queueIndex <= 0 && player.repeat !== "all")) return;
+  player.queueIndex = (player.queueIndex - 1 + player.queue.length) % player.queue.length;
+  startTrack(player.queue[player.queueIndex], true);
+}
+
+function togglePlayer() {
+  if (player.status === "idle" && player.currentTrack && player.queue.length) {
+    startTrack(player.queue[player.queueIndex], true);
     return;
   }
+  togglePlayAll();
+}
+
+function togglePlayAll() {
+  if (player.status === "loading") return;
+  if (player.currentId !== null && player.yt) {
+    if (player.status === "playing") player.yt.pauseVideo();
+    else if (player.status === "paused") player.yt.playVideo();
+    if (player.status === "playing" || player.status === "paused") return;
+  }
+  startList();
+}
+
+function startList() {
   if (!state.filtered.length) return;
-  player.queue = state.filtered.slice();
+  prepareQueue();
+  startTrack(player.queue[player.queueIndex], true);
+}
+
+function prepareQueue(track = null) {
+  player.queueSource = state.filtered.slice();
+  if (track && !player.queueSource.some((item) => item.id === track.id)) player.queueSource = [track];
+  player.queue = player.mode === "shuffle"
+    ? track ? [track, ...shuffleTracks(player.queueSource.filter((item) => item.id !== track.id))] : shuffleTracks(player.queueSource)
+    : player.queueSource.slice();
   player.queueKey = currentListKey();
-  player.queueIndex = 0;
-  startTrack(player.queue[0], true);
+  player.queueIndex = track ? player.queue.findIndex((item) => item.id === track.id) : 0;
 }
 
 async function togglePlay(track) {
+  if (player.currentId === track.id && player.status === "loading") return;
   if (player.currentId === track.id && player.yt && (player.status === "playing" || player.status === "paused")) {
     if (player.status === "playing") player.yt.pauseVideo(); else player.yt.playVideo();
     return;
   }
-  player.queue = []; // 手动点播单曲时结束“全部播放”队列
-  player.queueIndex = -1;
-  startTrack(track, false);
+  prepareQueue(track);
+  startTrack(track, true);
 }
 
 async function startTrack(track, inQueue) {
+  const requestId = ++player.requestId;
+  player.videoId = null;
+  player.seeking = false;
+  elements.playerCover.src = "assets/favicon.svg";
   player.currentTrack = track;
   setStatus("loading", track.id);
   try {
     const [id, yt] = await Promise.all([resolveVideoId(track), loadYouTubeApi()]);
-    if (player.currentId !== track.id) return; // 期间用户已切换到别的歌曲
+    if (player.requestId !== requestId) return; // 忽略已被新播放请求替代的解析结果
+    player.videoId = id;
+    elements.playerCover.src = `https://i.ytimg.com/vi/${encodeURIComponent(id)}/default.jpg`;
     yt.loadVideoById(id);
   } catch {
+    if (player.requestId !== requestId) return;
     if (inQueue) { if (player.currentId === track.id && !playNext()) setStatus("idle", null); return; } // 队列中跳过无法播放的歌曲
     if (player.currentId === track.id) setStatus("idle", null);
     openInYouTubeMusic(track); // 无法在页内解析音源时，退回到 YouTube Music
@@ -305,10 +466,7 @@ function applyFilters(resetPage = true) {
     if (state.category !== "all" && track.category !== state.category) return false;
     if (state.platform !== "all" && !track.platforms.includes(state.platform)) return false;
     if (!query) return true;
-    const haystack = [track.title, track.artists, track.album, track.category, ...track.playlist_names]
-      .join(" ")
-      .toLocaleLowerCase("zh-CN");
-    return haystack.includes(query);
+    return searchText(track).includes(query);
   });
   if (resetPage) state.page = 1;
   renderRows();
@@ -351,7 +509,18 @@ function jumpToPage() {
   document.querySelector(".collection__head").scrollIntoView({ behavior: "smooth" });
 }
 
-if (elements.playAll) elements.playAll.addEventListener("click", togglePlayAll);
+if (elements.playAll) elements.playAll.addEventListener("click", startList);
+elements.playerShuffle.addEventListener("click", () => changePlayMode({ target: { value: player.mode === "shuffle" ? "sequential" : "shuffle" } }));
+elements.playerRepeat.addEventListener("click", () => { player.repeat = player.repeat === "off" ? "all" : player.repeat === "all" ? "one" : "off"; updatePlayAll(); });
+elements.playerToggle.addEventListener("click", togglePlayer);
+elements.playerPrevious.addEventListener("click", playPrevious);
+elements.playerNext.addEventListener("click", () => playNext(player.repeat === "all"));
+elements.playerSeek.addEventListener("input", previewSeek);
+elements.playerSeek.addEventListener("change", commitSeek);
+elements.playerSeek.addEventListener("blur", () => { player.seeking = false; updatePlaybackTime(); });
+elements.playerVolume.addEventListener("input", () => { player.volume = Number(elements.playerVolume.value); player.muted = false; applyVolume(); });
+elements.playerMute.addEventListener("click", () => { if (player.volume === 0) { player.volume = 100; player.muted = false; } else player.muted = !player.muted; applyVolume(); });
+elements.playerCover.addEventListener("error", () => { if (elements.playerCover.getAttribute("src") !== "assets/favicon.svg") elements.playerCover.src = "assets/favicon.svg"; });
 elements.search.addEventListener("input", () => applyFilters());
 elements.platform.addEventListener("change", () => { state.platform = elements.platform.value; applyFilters(); });
 elements.pageSize.addEventListener("change", () => { state.pageSize = Number(elements.pageSize.value) || 100; applyFilters(); });
@@ -375,8 +544,8 @@ fetch("data/music.json")
     document.querySelector("#platform-stat").textContent = integerFormat.format(Object.keys(payload.platform_counts).length);
     const updated = new Date(payload.generated_at);
     const updateText = `数据更新时间：${updated.toLocaleString("zh-CN", { hour12: false })}`;
-    elements.updated.textContent = updateText;
     document.querySelector("#footer-updated").textContent = updateText;
+    elements.playerShuffle.disabled = false;
     elements.search.disabled = false;
     elements.platform.disabled = false;
     elements.pageSize.disabled = false;
