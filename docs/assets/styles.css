@@ -1229,3 +1229,18 @@ body[data-theme="dark"] .play-all-btn:hover:not(:disabled), body[data-theme="dar
   .player-bar .player-time { position: absolute; top: 24px; right: 16px; }
   .player-bar .now-playing { padding-right: 80px; }
 }
+
+/* Language toggle button styles */
+.lang-toggle-btn {
+  font-family: inherit;
+  font-size: 0.85rem;
+  font-weight: 700;
+  letter-spacing: -0.01em;
+  user-select: none;
+}
+
+.lang-toggle-text {
+  font-size: 0.82rem;
+  font-weight: 800;
+  line-height: 1;
+}

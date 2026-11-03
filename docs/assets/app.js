@@ -442,14 +442,14 @@ function renderRows() {
   }
 
   elements.rows.replaceChildren(fragment);
-  const categoryName = state.category === "all" ? "全部" : state.category;
+  const categoryName = state.category === "all" ? (window.I18n && window.I18n.isEn() ? "All" : "全部") : (window.I18n ? window.I18n.tCategory(state.category) : state.category);
   const query = elements.search.value.trim();
   const qualifier = query ? `，搜索“${query}”` : "";
-  elements.status.textContent = `${categoryName}${qualifier}：共 ${integerFormat.format(state.filtered.length)} 首`;
+  elements.status.textContent = (window.I18n && window.I18n.isEn()) ? `${categoryName}${qualifier}: ${integerFormat.format(state.filtered.length)} tracks` : `${categoryName}${qualifier}：共 ${integerFormat.format(state.filtered.length)} 首`;
   if (window.__musicSyncMobileCategory) window.__musicSyncMobileCategory(state.category, integerFormat.format(state.filtered.length));
   elements.pageNumber.value = String(state.page);
   elements.pageNumber.max = String(totalPages);
-  elements.pageTotal.textContent = `/ ${totalPages} 页`;
+  elements.pageTotal.textContent = (window.I18n && window.I18n.isEn()) ? `/ ${totalPages}` : `/ ${totalPages} 页`;
   const empty = state.filtered.length === 0;
   elements.first.disabled = empty || state.page <= 1;
   elements.previous.disabled = empty || state.page <= 1;
@@ -479,7 +479,7 @@ function activateCategory(category) {
     button.classList.toggle("is-active", active);
     button.setAttribute("aria-pressed", String(active));
   });
-  elements.title.textContent = category === "all" ? "全部" : category;
+  elements.title.textContent = category === "all" ? (window.I18n && window.I18n.isEn() ? "All" : "全部") : (window.I18n ? window.I18n.tCategory(category) : category);
   if (window.__musicSyncMobileCategory) window.__musicSyncMobileCategory(category);
   applyFilters();
 }
@@ -722,4 +722,26 @@ fetch("data/music.json")
       });
     }
   };
+
+  // Language toggle wire-up
+  const desktopLangToggle = document.querySelector("#lang-toggle-btn");
+  const mobileLangToggle = document.querySelector("#mobile-lang-toggle");
+  if (desktopLangToggle) {
+    desktopLangToggle.addEventListener("click", () => {
+      if (window.I18n) window.I18n.toggleLang();
+    });
+  }
+  if (mobileLangToggle) {
+    mobileLangToggle.addEventListener("click", () => {
+      if (window.I18n) window.I18n.toggleLang();
+    });
+  }
+  if (window.I18n) {
+    window.I18n.onChange(() => {
+      renderRows();
+      if (window.__renderTabs) window.__renderTabs();
+      if (window.__renderModalCategories) window.__renderModalCategories();
+    });
+  }
+
 })();
