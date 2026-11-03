@@ -1,5 +1,7 @@
 # Music Collection · 音乐收藏
 
+[简体中文](README.md) · [English](README.en.md)
+
 > 导出网易云与酷我歌单，合并去重并展示个人音乐收藏。
 
 <p>
