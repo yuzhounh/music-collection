@@ -281,6 +281,17 @@
     }
   });
 
+  
+  // Cross-tab language synchronization
+  window.addEventListener("storage", (e) => {
+    if (e.key === STORAGE_KEY && (e.newValue === "zh" || e.newValue === "en")) {
+      applyStatic();
+      listeners.forEach((cb) => {
+        try { cb(e.newValue); } catch {}
+      });
+    }
+  });
+
   window.I18n = {
     getLang,
     setLang,

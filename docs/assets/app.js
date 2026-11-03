@@ -445,7 +445,7 @@ function renderRows() {
   const categoryName = state.category === "all" ? (window.I18n && window.I18n.isEn() ? "All" : "全部") : (window.I18n ? window.I18n.tCategory(state.category) : state.category);
   const query = elements.search.value.trim();
   const qualifier = query ? `，搜索“${query}”` : "";
-  elements.status.textContent = (window.I18n && window.I18n.isEn()) ? `${categoryName}${qualifier}: ${integerFormat.format(state.filtered.length)} tracks` : `${categoryName}${qualifier}：共 ${integerFormat.format(state.filtered.length)} 首`;
+  elements.status.textContent = (window.I18n && window.I18n.isEn()) ? `${categoryName}${qualifier}: ${integerFormat.format(state.filtered.length)} ${state.filtered.length === 1 ? "track" : "tracks"}` : `${categoryName}${qualifier}：共 ${integerFormat.format(state.filtered.length)} 首`;
   if (window.__musicSyncMobileCategory) window.__musicSyncMobileCategory(state.category, integerFormat.format(state.filtered.length));
   elements.pageNumber.value = String(state.page);
   elements.pageNumber.max = String(totalPages);
