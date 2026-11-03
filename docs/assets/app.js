@@ -385,7 +385,7 @@ function renderRows() {
         category.className = "category-cell";
         const badge = document.createElement("span");
         badge.className = "category-badge";
-        badge.textContent = track.category;
+        badge.textContent = typeof window !== "undefined" && window.I18n ? window.I18n.tCategory(track.category) : track.category;
         category.append(badge);
 
         // 1. 歌手单元格（挂载完整 title 提示）
@@ -442,11 +442,12 @@ function renderRows() {
   }
 
   elements.rows.replaceChildren(fragment);
-  const categoryName = state.category === "all" ? (window.I18n && window.I18n.isEn() ? "All" : "全部") : (window.I18n ? window.I18n.tCategory(state.category) : state.category);
+  const isEn = typeof window !== "undefined" && window.I18n && window.I18n.isEn();
+  const categoryName = typeof window !== "undefined" && window.I18n ? window.I18n.tCategory(state.category) : (state.category === "all" ? "全部" : state.category);
   const query = elements.search.value.trim();
-  const qualifier = query ? `，搜索“${query}”` : "";
-  elements.status.textContent = (window.I18n && window.I18n.isEn()) ? `${categoryName}${qualifier}: ${integerFormat.format(state.filtered.length)} ${state.filtered.length === 1 ? "track" : "tracks"}` : `${categoryName}${qualifier}：共 ${integerFormat.format(state.filtered.length)} 首`;
-  if (window.__musicSyncMobileCategory) window.__musicSyncMobileCategory(state.category, integerFormat.format(state.filtered.length));
+  const qualifier = query ? (isEn ? `, searching "${query}"` : `，搜索“${query}”`) : "";
+  elements.status.textContent = isEn ? `${categoryName}${qualifier}: ${integerFormat.format(state.filtered.length)} ${state.filtered.length === 1 ? "track" : "tracks"}` : `${categoryName}${qualifier}：共 ${integerFormat.format(state.filtered.length)} 首`;
+  if (typeof window !== "undefined" && window.__musicSyncMobileCategory) window.__musicSyncMobileCategory(state.category, integerFormat.format(state.filtered.length));
   elements.pageNumber.value = String(state.page);
   elements.pageNumber.max = String(totalPages);
   elements.pageTotal.textContent = (window.I18n && window.I18n.isEn()) ? `/ ${totalPages}` : `/ ${totalPages} 页`;
@@ -479,25 +480,52 @@ function activateCategory(category) {
     button.classList.toggle("is-active", active);
     button.setAttribute("aria-pressed", String(active));
   });
-  elements.title.textContent = category === "all" ? (window.I18n && window.I18n.isEn() ? "All" : "全部") : (window.I18n ? window.I18n.tCategory(category) : category);
-  if (window.__musicSyncMobileCategory) window.__musicSyncMobileCategory(category);
+  elements.title.textContent = typeof window !== "undefined" && window.I18n ? window.I18n.tCategory(category) : (category === "all" ? "全部" : category);
+  if (typeof window !== "undefined" && window.__musicSyncMobileCategory) window.__musicSyncMobileCategory(category);
   applyFilters();
 }
 
+function renderTabs() {
+  if (!elements.tabs || !elements.tabs.querySelectorAll) return;
+  const isEn = typeof window !== "undefined" && window.I18n && window.I18n.isEn();
+  const allBtn = elements.tabs.querySelector("[data-category='all']");
+  if (allBtn && allBtn.firstChild) {
+    allBtn.firstChild.nodeValue = `${isEn ? "All" : "全部"} `;
+  }
+  const categories = typeof window !== "undefined" ? window.__categoriesData : [];
+  if (categories && categories.length) {
+    elements.tabs.querySelectorAll(".tab:not([data-category='all'])").forEach((button) => {
+      const catKey = button.dataset.category;
+      const catData = categories.find((c) => c.key === catKey);
+      if (!catData) return;
+      const label = isEn ? (typeof window !== "undefined" && window.I18n ? window.I18n.tCategory(catKey) : catKey) : (catData ? catData.label : catKey);
+      button.innerHTML = `${label} <span>${integerFormat.format(catData.count)}</span>`;
+    });
+  }
+}
+if (typeof window !== "undefined") window.__renderTabs = renderTabs;
+
 function buildTabs(payload) {
-  window.__categoriesData = payload.categories;
-  if (window.__musicSyncMobileCategory) window.__musicSyncMobileCategory("all", integerFormat.format(payload.total));
-  document.querySelector("#all-count").textContent = integerFormat.format(payload.total);
+  if (typeof window !== "undefined") window.__categoriesData = payload.categories;
+  const isEn = typeof window !== "undefined" && window.I18n && window.I18n.isEn();
+  const allBtn = elements.tabs.querySelector("[data-category='all']");
+  if (allBtn) {
+    if (allBtn.firstChild) allBtn.firstChild.nodeValue = `${isEn ? "All" : "全部"} `;
+    const allCount = allBtn.querySelector("#all-count");
+    if (allCount) allCount.textContent = integerFormat.format(payload.total);
+    allBtn.addEventListener("click", () => activateCategory("all"));
+  }
   payload.categories.forEach((category) => {
     const button = document.createElement("button");
     button.type = "button";
     button.className = "tab";
     button.dataset.category = category.key;
-    button.innerHTML = `${category.label} <span>${integerFormat.format(category.count)}</span>`;
+    const label = isEn ? (typeof window !== "undefined" && window.I18n ? window.I18n.tCategory(category.key) : category.label) : category.label;
+    button.innerHTML = `${label} <span>${integerFormat.format(category.count)}</span>`;
     button.addEventListener("click", () => activateCategory(category.key));
     elements.tabs.append(button);
   });
-  elements.tabs.querySelector("[data-category='all']").addEventListener("click", () => activateCategory("all"));
+  if (typeof window !== "undefined" && window.__musicSyncMobileCategory) window.__musicSyncMobileCategory("all", integerFormat.format(payload.total));
 }
 
 function jumpToPage() {
@@ -676,17 +704,14 @@ fetch("data/music.json")
 
   // Expose helpers globally for app.js integration
   window.__musicSyncMobileCategory = function(categoryKey, count) {
+    const isEn = window.I18n && window.I18n.isEn();
     const tag = document.querySelector("#mobileCurrentCategoryTag");
     const countEl = document.querySelector("#mobileFilterCount");
     if (tag) {
-      if (categoryKey === "all") {
-        tag.textContent = "全部";
-      } else {
-        tag.textContent = categoryKey;
-      }
+      tag.textContent = window.I18n ? window.I18n.tCategory(categoryKey) : (categoryKey === "all" ? "全部" : categoryKey);
     }
     if (countEl && count !== undefined) {
-      countEl.textContent = `(${count} 首)`;
+      countEl.textContent = isEn ? `(${count})` : `(${count} 首)`;
     }
   };
 
@@ -694,13 +719,15 @@ fetch("data/music.json")
   window.__renderModalCategories = function() {
     if (!modalCategoryList) return;
     modalCategoryList.innerHTML = "";
+    const isEn = window.I18n && window.I18n.isEn();
+    const countSuffix = isEn ? "" : " 首";
     
     // Add "All" option
     const totalCount = state.all.length;
     const allBtn = document.createElement("button");
     allBtn.type = "button";
     allBtn.className = "modal-category-item" + (state.category === "all" ? " is-active" : "");
-    allBtn.innerHTML = `<span>全部</span><span class="modal-category-badge">${integerFormat.format(totalCount)} 首</span>`;
+    allBtn.innerHTML = `<span>${isEn ? "All" : "全部"}</span><span class="modal-category-badge">${integerFormat.format(totalCount)}${countSuffix}</span>`;
     allBtn.addEventListener("click", () => {
       activateCategory("all");
       closeSwitchCategoryModal();
@@ -713,7 +740,8 @@ fetch("data/music.json")
         const btn = document.createElement("button");
         btn.type = "button";
         btn.className = "modal-category-item" + (state.category === cat.key ? " is-active" : "");
-        btn.innerHTML = `<span>${cat.label}</span><span class="modal-category-badge">${integerFormat.format(cat.count)} 首</span>`;
+        const label = isEn ? (window.I18n ? window.I18n.tCategory(cat.key) : cat.label) : cat.label;
+        btn.innerHTML = `<span>${label}</span><span class="modal-category-badge">${integerFormat.format(cat.count)}${countSuffix}</span>`;
         btn.addEventListener("click", () => {
           activateCategory(cat.key);
           closeSwitchCategoryModal();
@@ -738,6 +766,7 @@ fetch("data/music.json")
   }
   if (window.I18n) {
     window.I18n.onChange(() => {
+      elements.title.textContent = window.I18n ? window.I18n.tCategory(state.category) : (state.category === "all" ? "全部" : state.category);
       renderRows();
       if (window.__renderTabs) window.__renderTabs();
       if (window.__renderModalCategories) window.__renderModalCategories();

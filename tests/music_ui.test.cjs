@@ -72,3 +72,49 @@ test('cached search preserves case, playlist, category and platform matching acr
   app.applyFilters();
   assert.equal(app.state.filtered.length, 0);
 });
+test("i18n correctly translates all four category labels and all/全部", () => {
+  const source = readFileSync(new URL("../docs/assets/i18n.js", `file://${__filename.replaceAll("\\", "/")}`), "utf8");
+  const storage = new Map();
+  const mockWindow = { addEventListener() {} };
+  const mockDoc = {
+    readyState: "complete",
+    body: {},
+    documentElement: {},
+    addEventListener() {},
+    querySelector: () => null,
+    querySelectorAll: () => [],
+    createTreeWalker: () => ({ nextNode: () => null })
+  };
+  const context = vm.createContext({
+    window: mockWindow,
+    document: mockDoc,
+    localStorage: {
+      getItem: (k) => storage.get(k) || null,
+      setItem: (k, v) => storage.set(k, String(v)),
+    },
+    NodeFilter: { SHOW_TEXT: 4, FILTER_ACCEPT: 1, FILTER_REJECT: 2 },
+  });
+  vm.runInContext(source, context);
+  const i18n = mockWindow.I18n;
+  assert.ok(i18n);
+
+  // Default Chinese
+  i18n.setLang("zh");
+  assert.equal(i18n.isEn(), false);
+  assert.equal(i18n.tCategory("流行歌曲"), "流行歌曲");
+  assert.equal(i18n.tCategory("外文歌曲"), "外文歌曲");
+  assert.equal(i18n.tCategory("影视原声"), "影视原声");
+  assert.equal(i18n.tCategory("纯音乐"), "纯音乐");
+  assert.equal(i18n.tCategory("all"), "全部");
+  assert.equal(i18n.tCategory("全部"), "全部");
+
+  // English mode
+  i18n.setLang("en");
+  assert.equal(i18n.isEn(), true);
+  assert.equal(i18n.tCategory("流行歌曲"), "Pop");
+  assert.equal(i18n.tCategory("外文歌曲"), "International");
+  assert.equal(i18n.tCategory("影视原声"), "Soundtrack");
+  assert.equal(i18n.tCategory("纯音乐"), "Instrumental");
+  assert.equal(i18n.tCategory("all"), "All");
+  assert.equal(i18n.tCategory("全部"), "All");
+});

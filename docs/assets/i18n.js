@@ -124,7 +124,8 @@
     "外文歌曲": "International",
     "纯音乐": "Instrumental",
     "影视原声": "Soundtrack",
-    "全部": "All"
+    "全部": "All",
+    "all": "All"
   };
 
   const DOC = {
@@ -245,7 +246,11 @@
   }
 
   function tCategory(cat) {
-    if (!isEn() || !cat) return cat;
+    if (!cat) return "";
+    if (!isEn()) {
+      if (cat === "all") return "全部";
+      return cat;
+    }
     return CATEGORIES[cat] || cat;
   }
 
