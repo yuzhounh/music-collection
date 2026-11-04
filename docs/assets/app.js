@@ -610,8 +610,8 @@ fetch("data/music.json")
     document.body.setAttribute("data-theme", theme);
     localStorage.setItem("music_theme", theme);
     const isDark = theme === "dark";
-    sunIcons.forEach(icon => { if (icon) icon.style.display = isDark ? "none" : "block"; });
-    moonIcons.forEach(icon => { if (icon) icon.style.display = isDark ? "block" : "none"; });
+    sunIcons.forEach(icon => { if (icon) icon.style.display = isDark ? "block" : "none"; });
+    moonIcons.forEach(icon => { if (icon) icon.style.display = isDark ? "none" : "block"; });
   }
 
   function toggleTheme() {
