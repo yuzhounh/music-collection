@@ -610,8 +610,15 @@ fetch("data/music.json")
     document.body.setAttribute("data-theme", theme);
     localStorage.setItem("music_theme", theme);
     const isDark = theme === "dark";
-    sunIcons.forEach(icon => { if (icon) icon.style.display = isDark ? "block" : "none"; });
-    moonIcons.forEach(icon => { if (icon) icon.style.display = isDark ? "none" : "block"; });
+    const navSun = document.querySelector("#theme-icon-sun");
+    const navMoon = document.querySelector("#theme-icon-moon");
+    if (navSun) navSun.style.display = isDark ? "block" : "none";
+    if (navMoon) navMoon.style.display = isDark ? "none" : "block";
+
+    const drawerSun = document.querySelector("#drawer-theme-icon-sun");
+    const drawerMoon = document.querySelector("#drawer-theme-icon-moon");
+    if (drawerSun) drawerSun.style.display = isDark ? "none" : "block";
+    if (drawerMoon) drawerMoon.style.display = isDark ? "block" : "none";
   }
 
   function toggleTheme() {

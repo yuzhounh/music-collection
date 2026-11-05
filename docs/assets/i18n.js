@@ -203,15 +203,25 @@
 
   function updateToggles() {
     const en = isEn();
-    const label = en ? "中" : "EN";
-    const title = en ? "切换为简体中文 (L)" : "Switch to English (L)";
-    document.querySelectorAll(".lang-toggle-btn").forEach((btn) => {
-      btn.setAttribute("title", title);
-      btn.setAttribute("aria-label", title);
-      const textEl = btn.querySelector(".lang-toggle-text");
-      if (textEl) textEl.textContent = label;
-      else btn.textContent = label;
-    });
+    const topLabel = en ? "中" : "EN";
+    const drawerLabel = en ? "EN" : "中";
+    const topTitle = en ? "切换为简体中文 (L)" : "Switch to English (L)";
+    const drawerTitle = en ? "Switch to English (L)" : "切换为简体中文 (L)";
+
+    const desktopBtn = document.querySelector("#lang-toggle-btn");
+    const mobileBtn = document.querySelector("#mobile-lang-toggle");
+    if (desktopBtn) {
+      desktopBtn.setAttribute("title", topTitle);
+      desktopBtn.setAttribute("aria-label", topTitle);
+      const textEl = desktopBtn.querySelector(".lang-toggle-text");
+      if (textEl) textEl.textContent = topLabel;
+    }
+    if (mobileBtn) {
+      mobileBtn.setAttribute("title", drawerTitle);
+      mobileBtn.setAttribute("aria-label", drawerTitle);
+      const textEl = mobileBtn.querySelector(".lang-toggle-text");
+      if (textEl) textEl.textContent = drawerLabel;
+    }
   }
 
   function applyStatic() {
